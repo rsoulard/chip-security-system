@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChipSecuritySystem
 {
@@ -55,6 +52,87 @@ namespace ChipSecuritySystem
         private bool IsValidEdge(ColorChip orginChip, int originChipIndex, ColorChip edgeChip, int edgeChipIndex)
         {
             return (orginChip.EndColor == edgeChip.StartColor) && (originChipIndex != edgeChipIndex);
+        }
+
+        public IList<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
+        {
+            var currentLongest = new List<ColorChip>();
+
+            foreach (var startingNode in TakeNodeWithChipStartingWith(startColor))
+            {
+                ProcessStartingNode(startingNode, currentLongest, endColor);
+            }
+
+            return currentLongest;
+        }
+
+        private void ProcessStartingNode(Node<int> startingNode, List<ColorChip> currentLongest, Color endColor)
+        {
+            bool[] visitedNodes = new bool[graph.Count];
+            Stack<Node<int>> nodesToTraverse = new Stack<Node<int>>();
+            List<Node<int>> sequence = new List<Node<int>>
+                {
+                    startingNode
+                };
+
+            foreach (var edge in startingNode.Edges)
+            {
+                nodesToTraverse.Push(edge);
+            }
+
+            visitedNodes[startingNode.Value] = true;
+
+            while (nodesToTraverse.Count > 0)
+            {
+                ProcessNode(nodesToTraverse, visitedNodes, currentLongest, sequence, endColor);
+            }
+        }
+
+        private void ProcessNode(Stack<Node<int>> nodesToTraverse, bool[] visitedNodes, List<ColorChip> currentLongest, List<Node<int>> sequence, Color endColor)
+        {
+            if (!visitedNodes[nodesToTraverse.Peek().Value])
+            {
+                var node = nodesToTraverse.Pop();
+                sequence.Add(node);
+                visitedNodes[node.Value] = true;
+
+                if (colorChips[node.Value].EndColor == endColor && sequence.Count > currentLongest.Count)
+                {
+                    currentLongest.Clear();
+
+                    foreach (var step in sequence)
+                    {
+                        currentLongest.Add(colorChips[step.Value]);
+                    }
+
+                    sequence.Remove(node);
+                }
+
+                foreach (var edge in node.Edges)
+                {
+                    nodesToTraverse.Push(edge);
+                }
+
+            }
+            else
+            {
+                nodesToTraverse.Pop();
+            }
+        }
+
+        private IEnumerable<Node<int>> TakeNodeWithChipStartingWith(Color startColor)
+        {
+            for (int i = 0; i < colorChips.Count; i++)
+            {
+                if (colorChips[i].StartColor == startColor)
+                {
+                    yield return graph[i];
+                }
+                else
+                {
+                    yield break;
+                }
+            }
         }
     }
 }
