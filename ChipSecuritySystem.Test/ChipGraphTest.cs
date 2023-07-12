@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace ChipSecuritySystem.Test
 {
@@ -10,9 +11,17 @@ namespace ChipSecuritySystem.Test
         }
 
         [Test]
-        public void Test1()
+        public void Constructor_ValidInput_ReturnsChipGraph()
         {
-            Assert.Pass();
+            var colorChips = new List<ColorChip>
+            {
+                new ColorChip(Color.Blue, Color.Green),
+                new ColorChip(Color.Orange, Color.Purple),
+                new ColorChip(Color.Green, Color.Orange)
+            };
+            var chipGraph = new ChipGraph(colorChips);
+
+            Assert.That(chipGraph, Is.Not.Null);
         }
     }
 }
