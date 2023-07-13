@@ -5,53 +5,51 @@ namespace ChipSecuritySystem
 {
     public class ChipGraph
     {
-        private readonly IReadOnlyList<ColorChip> colorChips;
-        private readonly IReadOnlyList<Node<int>> graph;
+        private readonly IReadOnlyList<Node<ColorChip>> graph;
 
         public ChipGraph(IReadOnlyList<ColorChip> colorChips)
         {
-            this.colorChips = colorChips;
-            this.graph = GenerateGraph(colorChips);
+            graph = GenerateGraph(colorChips);
         }
 
-        private IReadOnlyList<Node<int>> GenerateGraph(IReadOnlyList<ColorChip> colorChips)
+        private IReadOnlyList<Node<ColorChip>> GenerateGraph(IReadOnlyList<ColorChip> colorChips)
         {
-            var graph = BuildUnlinkedGraph(colorChips.Count);
-            LinkGraph(graph, colorChips);
+            var graph = BuildUnlinkedGraph(colorChips);
+            LinkGraph(graph);
 
             return graph;
         }
 
-        private List<Node<int>> BuildUnlinkedGraph(int colorChipCount)
+        private List<Node<ColorChip>> BuildUnlinkedGraph(IReadOnlyList<ColorChip> colorChips)
         {
-            var graph = new List<Node<int>>();
+            var graph = new List<Node<ColorChip>>();
 
-            for (int i = 0; i < colorChipCount; i++)
+            foreach(var colorChip in colorChips)
             {
-                graph.Add(new Node<int>(i));
+                graph.Add(new Node<ColorChip>(colorChip));
             }
 
             return graph;
         }
 
-        private void LinkGraph(IList<Node<int>> graph, IReadOnlyList<ColorChip> colorChips)
+        private void LinkGraph(IList<Node<ColorChip>> graph)
         {
-            for (int currentChip = 0; currentChip < colorChips.Count; currentChip++)
+            foreach (var currentChipNode in graph)
             {
-                for (int otherChip = 0; otherChip < colorChips.Count; otherChip++)
+                foreach (var otherChipNode in graph)
                 {
-                    if (IsValidEdge(colorChips[currentChip], currentChip, colorChips[otherChip], otherChip))
+                    if (IsValidEdge(currentChipNode.Value, otherChipNode.Value))
                     {
-                        graph[currentChip].AddEdge(graph[otherChip]);
+                        currentChipNode.AddEdge(otherChipNode);
                     }
                 }
 
             }
         }
 
-        private bool IsValidEdge(ColorChip orginChip, int originChipIndex, ColorChip edgeChip, int edgeChipIndex)
+        private bool IsValidEdge(ColorChip orginChip, ColorChip edgeChip)
         {
-            return (orginChip.EndColor == edgeChip.StartColor) && (originChipIndex != edgeChipIndex);
+            return (orginChip.EndColor == edgeChip.StartColor) && (orginChip != edgeChip);
         }
 
         public IList<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
@@ -70,39 +68,39 @@ namespace ChipSecuritySystem
 
         private List<ColorChip> TopologySortGraph()
         {
-            var visited = new bool[graph.Count];
-            var depList = new LinkedList<Node<int>>();
+            var visited = new HashSet<Node<ColorChip>>();
+            var dependencyList = new LinkedList<Node<ColorChip>>();
 
             foreach (var node in graph)
             {
-                if (!visited[node.Value])
+                if (!visited.Contains(node))
                 {
-                    DepthFirstDependencySearch(node, depList, visited);
+                    DepthFirstDependencySearch(node, dependencyList, visited);
                 }
             }
 
-            var ret = new List<ColorChip>();
-            foreach (var dep in depList)
+            var sortedGraph = new List<ColorChip>();
+            foreach (var dependency in dependencyList)
             {
-                ret.Add(colorChips[dep.Value]);
+                sortedGraph.Add(dependency.Value);
             }
 
-            return ret;
+            return sortedGraph;
         }
 
-        private void DepthFirstDependencySearch(Node<int> node, LinkedList<Node<int>> depList, bool[] visited)
+        private void DepthFirstDependencySearch(Node<ColorChip> node, LinkedList<Node<ColorChip>> dependencyList, HashSet<Node<ColorChip>> visited)
         {
-            visited[node.Value] = true;
+            visited.Add(node);
 
             foreach (var edge in node.Edges)
             {
-                if (!visited[edge.Value])
+                if (!visited.Contains(edge))
                 {
-                    DepthFirstDependencySearch(edge, depList, visited);
+                    DepthFirstDependencySearch(edge, dependencyList, visited);
                 }
             }
 
-            depList.AddFirst(node);
+            dependencyList.AddFirst(node);
         }
 
         private IList<ColorChip> FilterGraph(List<ColorChip> graph, int startingIndex, int endingIndex, Color endColor)
