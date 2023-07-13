@@ -56,52 +56,28 @@ namespace ChipSecuritySystem
 
         public IList<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
         {
-            var currentLongest = new List<ColorChip>();
-            var result = new List<ColorChip>();
             var sortedGraph = TopologySortGraph();
-            var startingIndex = sortedGraph.FindIndex(0, sortedGraph.Count, node => node.StartColor == startColor);
+            var startingIndex = sortedGraph.FindIndex(node => node.StartColor == startColor);
+            var endingIndex = sortedGraph.FindLastIndex(node => node.EndColor == endColor);
 
-            result.Add(sortedGraph[startingIndex]);
-
-            if (sortedGraph[startingIndex].EndColor == endColor)
+            if (startingIndex == -1 || endingIndex == -1)
             {
-                currentLongest = new List<ColorChip>
-                {
-                    sortedGraph[startingIndex]
-                };
+                return new List<ColorChip>();
             }
 
-            for (int i = startingIndex + 1; i < sortedGraph.Count; i++)
-            {
-                while (result.Last().EndColor != sortedGraph[i].StartColor)
-                {
-                    result.Remove(result.Last());
-                }
-
-                if (result.Last().EndColor == sortedGraph[i].StartColor)
-                {
-                    result.Add(sortedGraph[i]);
-
-                    if (sortedGraph[i].EndColor == endColor && result.Count > currentLongest.Count)
-                    {
-                        currentLongest = result;
-                    }
-                }
-            }
-
-            return currentLongest;
-
+            return FilterGraph(sortedGraph, startingIndex, endingIndex, endColor);
         }
 
         private List<ColorChip> TopologySortGraph()
         {
             var visited = new bool[graph.Count];
             var depList = new LinkedList<Node<int>>();
+
             foreach (var node in graph)
             {
                 if (!visited[node.Value])
                 {
-                    DfsVisit(node, depList, visited);
+                    DepthFirstDependencySearch(node, depList, visited);
                 }
             }
 
@@ -114,18 +90,58 @@ namespace ChipSecuritySystem
             return ret;
         }
 
-        private void DfsVisit(Node<int> node, LinkedList<Node<int>> depList, bool[] visited)
+        private void DepthFirstDependencySearch(Node<int> node, LinkedList<Node<int>> depList, bool[] visited)
         {
             visited[node.Value] = true;
+
             foreach (var edge in node.Edges)
             {
                 if (!visited[edge.Value])
                 {
-                    DfsVisit(edge, depList, visited);
+                    DepthFirstDependencySearch(edge, depList, visited);
                 }
             }
 
             depList.AddFirst(node);
+        }
+
+        private IList<ColorChip> FilterGraph(List<ColorChip> graph, int startingIndex, int endingIndex, Color endColor)
+        {
+            var currentSequence = new List<ColorChip>()
+            {
+                graph[startingIndex]
+            };
+            var longestSequence = new List<ColorChip>();
+
+            if (graph[startingIndex].EndColor == endColor)
+            {
+                longestSequence.Add(graph[startingIndex]);
+            }
+
+            for (int i = startingIndex + 1; i < graph.Count; i++)
+            {
+                if (i > endingIndex)
+                {
+                    break;
+                }
+
+                while (currentSequence.Last().EndColor != graph[i].StartColor)
+                {
+                    currentSequence.Remove(currentSequence.Last());
+                }
+
+                if (currentSequence.Last().EndColor == graph[i].StartColor)
+                {
+                    currentSequence.Add(graph[i]);
+
+                    if (graph[i].EndColor == endColor && currentSequence.Count > longestSequence.Count)
+                    {
+                        longestSequence = currentSequence;
+                    }
+                }
+            }
+
+            return longestSequence;
         }
     }
 }
