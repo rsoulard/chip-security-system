@@ -3,16 +3,19 @@ using System.Collections.Generic;
 
 namespace ChipSecuritySystem
 {
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             var colorChips = new List<ColorChip>
             {
-                new ColorChip(Color.Blue, Color.Yellow),
-                new ColorChip(Color.Red, Color.Green),
-                new ColorChip(Color.Yellow, Color.Red),
-                new ColorChip(Color.Orange, Color.Purple)
+                new ColorChip(Color.Blue, Color.Green),
+                new ColorChip(Color.Orange, Color.Purple),
+                new ColorChip(Color.Green, Color.Orange),
+                new ColorChip(Color.Orange, Color.Green),
+                new ColorChip(Color.Purple, Color.Green),
+                new ColorChip(Color.Green, Color.Green),
+                new ColorChip(Color.Orange, Color.Orange),
             };
             var chipGraph = new ChipGraph(colorChips);
 
@@ -34,7 +37,7 @@ namespace ChipSecuritySystem
 
             foreach(var colorChip in results)
             {
-                Console.Write(colorChip.ToString());
+                Console.Write($"[{colorChip}]");
 
                 if (results.IndexOf(colorChip) != results.Count - 1)
                 {

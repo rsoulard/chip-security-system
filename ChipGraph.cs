@@ -24,7 +24,7 @@ namespace ChipSecuritySystem
         {
             var graph = new List<Node<ColorChip>>();
 
-            foreach(var colorChip in colorChips)
+            foreach (var colorChip in colorChips)
             {
                 graph.Add(new Node<ColorChip>(colorChip));
             }
@@ -43,7 +43,6 @@ namespace ChipSecuritySystem
                         currentChipNode.AddEdge(otherChipNode);
                     }
                 }
-
             }
         }
 
@@ -58,7 +57,7 @@ namespace ChipSecuritySystem
             var startingIndex = sortedGraph.FindIndex(node => node.Value.StartColor == startColor);
             var endingIndex = sortedGraph.FindLastIndex(node => node.Value.EndColor == endColor);
 
-            if (startingIndex == -1 || endingIndex == -1)
+            if (HasNoValidStartOrEndChips(startingIndex, endingIndex))
             {
                 return new List<ColorChip>();
             }
@@ -80,12 +79,14 @@ namespace ChipSecuritySystem
             }
 
             var sortedGraph = new List<Node<ColorChip>>();
-            foreach (var dependency in dependencyList)
-            {
-                sortedGraph.Add(dependency);
-            }
+            sortedGraph.AddRange(dependencyList);
 
             return sortedGraph;
+        }
+
+        private bool HasNoValidStartOrEndChips(int startingColorIndex, int endingColorIndex)
+        {
+            return (startingColorIndex == -1) || (endingColorIndex == -1);
         }
 
         private void DepthFirstDependencySearch(Node<ColorChip> node, LinkedList<Node<ColorChip>> dependencyList, HashSet<Node<ColorChip>> visited)
