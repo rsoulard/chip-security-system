@@ -57,82 +57,75 @@ namespace ChipSecuritySystem
         public IList<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
         {
             var currentLongest = new List<ColorChip>();
+            var result = new List<ColorChip>();
+            var sortedGraph = TopologySortGraph();
+            var startingIndex = sortedGraph.FindIndex(0, sortedGraph.Count, node => node.StartColor == startColor);
 
-            foreach (var startingNode in TakeNodeWithChipStartingWith(startColor))
+            result.Add(sortedGraph[startingIndex]);
+
+            if (sortedGraph[startingIndex].EndColor == endColor)
             {
-                ProcessStartingNode(startingNode, currentLongest, endColor);
+                currentLongest = new List<ColorChip>
+                {
+                    sortedGraph[startingIndex]
+                };
+            }
+
+            for (int i = startingIndex + 1; i < sortedGraph.Count; i++)
+            {
+                while (result.Last().EndColor != sortedGraph[i].StartColor)
+                {
+                    result.Remove(result.Last());
+                }
+
+                if (result.Last().EndColor == sortedGraph[i].StartColor)
+                {
+                    result.Add(sortedGraph[i]);
+
+                    if (sortedGraph[i].EndColor == endColor && result.Count > currentLongest.Count)
+                    {
+                        currentLongest = result;
+                    }
+                }
             }
 
             return currentLongest;
+
         }
 
-        private void ProcessStartingNode(Node<int> startingNode, List<ColorChip> currentLongest, Color endColor)
+        private List<ColorChip> TopologySortGraph()
         {
-            bool[] visitedNodes = new bool[graph.Count];
-            Stack<Node<int>> nodesToTraverse = new Stack<Node<int>>();
-            List<Node<int>> sequence = new List<Node<int>>
+            var visited = new bool[graph.Count];
+            var depList = new LinkedList<Node<int>>();
+            foreach (var node in graph)
+            {
+                if (!visited[node.Value])
                 {
-                    startingNode
-                };
-
-            foreach (var edge in startingNode.Edges)
-            {
-                nodesToTraverse.Push(edge);
+                    DfsVisit(node, depList, visited);
+                }
             }
 
-            visitedNodes[startingNode.Value] = true;
-
-            while (nodesToTraverse.Count > 0)
+            var ret = new List<ColorChip>();
+            foreach (var dep in depList)
             {
-                ProcessNode(nodesToTraverse, visitedNodes, currentLongest, sequence, endColor);
+                ret.Add(colorChips[dep.Value]);
             }
+
+            return ret;
         }
 
-        private void ProcessNode(Stack<Node<int>> nodesToTraverse, bool[] visitedNodes, List<ColorChip> currentLongest, List<Node<int>> sequence, Color endColor)
+        private void DfsVisit(Node<int> node, LinkedList<Node<int>> depList, bool[] visited)
         {
-            if (!visitedNodes[nodesToTraverse.Peek().Value])
+            visited[node.Value] = true;
+            foreach (var edge in node.Edges)
             {
-                var node = nodesToTraverse.Pop();
-                sequence.Add(node);
-                visitedNodes[node.Value] = true;
-
-                if (colorChips[node.Value].EndColor == endColor && sequence.Count > currentLongest.Count)
+                if (!visited[edge.Value])
                 {
-                    currentLongest.Clear();
-
-                    foreach (var step in sequence)
-                    {
-                        currentLongest.Add(colorChips[step.Value]);
-                    }
-
-                    sequence.Remove(node);
-                }
-
-                foreach (var edge in node.Edges)
-                {
-                    nodesToTraverse.Push(edge);
-                }
-
-            }
-            else
-            {
-                nodesToTraverse.Pop();
-            }
-        }
-
-        private IEnumerable<Node<int>> TakeNodeWithChipStartingWith(Color startColor)
-        {
-            for (int i = 0; i < colorChips.Count; i++)
-            {
-                if (colorChips[i].StartColor == startColor)
-                {
-                    yield return graph[i];
-                }
-                else
-                {
-                    yield break;
+                    DfsVisit(edge, depList, visited);
                 }
             }
+
+            depList.AddFirst(node);
         }
     }
 }
