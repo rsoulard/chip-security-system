@@ -32,7 +32,7 @@ namespace ChipSecuritySystem
             return graph;
         }
 
-        private void LinkGraph(IList<Node<ColorChip>> graph)
+        private void LinkGraph(List<Node<ColorChip>> graph)
         {
             foreach (var currentChipNode in graph)
             {
@@ -52,11 +52,11 @@ namespace ChipSecuritySystem
             return (orginChip.EndColor == edgeChip.StartColor) && (orginChip != edgeChip);
         }
 
-        public IList<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
+        public List<ColorChip> FindLongestChainBetween(Color startColor, Color endColor)
         {
             var sortedGraph = TopologySortGraph();
-            var startingIndex = sortedGraph.FindIndex(node => node.StartColor == startColor);
-            var endingIndex = sortedGraph.FindLastIndex(node => node.EndColor == endColor);
+            var startingIndex = sortedGraph.FindIndex(node => node.Value.StartColor == startColor);
+            var endingIndex = sortedGraph.FindLastIndex(node => node.Value.EndColor == endColor);
 
             if (startingIndex == -1 || endingIndex == -1)
             {
@@ -66,7 +66,7 @@ namespace ChipSecuritySystem
             return FilterGraph(sortedGraph, startingIndex, endingIndex, endColor);
         }
 
-        private List<ColorChip> TopologySortGraph()
+        private List<Node<ColorChip>> TopologySortGraph()
         {
             var visited = new HashSet<Node<ColorChip>>();
             var dependencyList = new LinkedList<Node<ColorChip>>();
@@ -79,10 +79,10 @@ namespace ChipSecuritySystem
                 }
             }
 
-            var sortedGraph = new List<ColorChip>();
+            var sortedGraph = new List<Node<ColorChip>>();
             foreach (var dependency in dependencyList)
             {
-                sortedGraph.Add(dependency.Value);
+                sortedGraph.Add(dependency);
             }
 
             return sortedGraph;
@@ -103,17 +103,17 @@ namespace ChipSecuritySystem
             dependencyList.AddFirst(node);
         }
 
-        private IList<ColorChip> FilterGraph(List<ColorChip> graph, int startingIndex, int endingIndex, Color endColor)
+        private List<ColorChip> FilterGraph(List<Node<ColorChip>> graph, int startingIndex, int endingIndex, Color endColor)
         {
             var currentSequence = new List<ColorChip>()
             {
-                graph[startingIndex]
+                graph[startingIndex].Value
             };
             var longestSequence = new List<ColorChip>();
 
-            if (graph[startingIndex].EndColor == endColor)
+            if (graph[startingIndex].Value.EndColor == endColor)
             {
-                longestSequence.Add(graph[startingIndex]);
+                longestSequence.Add(graph[startingIndex].Value);
             }
 
             for (int i = startingIndex + 1; i < graph.Count; i++)
@@ -123,16 +123,16 @@ namespace ChipSecuritySystem
                     break;
                 }
 
-                while (currentSequence.Last().EndColor != graph[i].StartColor)
+                while (currentSequence.Last().EndColor != graph[i].Value.StartColor)
                 {
                     currentSequence.Remove(currentSequence.Last());
                 }
 
-                if (currentSequence.Last().EndColor == graph[i].StartColor)
+                if (currentSequence.Last().EndColor == graph[i].Value.StartColor)
                 {
-                    currentSequence.Add(graph[i]);
+                    currentSequence.Add(graph[i].Value);
 
-                    if (graph[i].EndColor == endColor && currentSequence.Count > longestSequence.Count)
+                    if (graph[i].Value.EndColor == endColor && currentSequence.Count > longestSequence.Count)
                     {
                         longestSequence = currentSequence;
                     }
